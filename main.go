@@ -77,10 +77,14 @@ var (
 )
 
 func init() {
-	err := godotenv.Load(".env")
 
-	if err != nil {
-		log.Fatal("Error loading .env file")
+	// load .env file if local
+	if os.Getenv("ENV") != "production" {
+		err := godotenv.Load(".env")
+
+		if err != nil {
+			log.Fatal("Error loading .env file")
+		}
 	}
 
 	Port = getenv("PORT", "8080")
