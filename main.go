@@ -53,10 +53,7 @@ type OpenAIResponse struct {
 	Object  string `json:"object"`
 	Model   string `json:"model"`
 	Choices []struct {
-		Message struct {
-			Role    string `json:"role"`
-			Content string `json:"content"`
-		} `json:"message"`
+		Message      `json:"message"`
 		Index        int    `json:"index"`
 		FinishReason string `json:"finish_reason"`
 	} `json:"choices"`
@@ -68,6 +65,12 @@ type Usage struct {
 	PromptTokens     int `json:"prompt_tokens"`
 	CompletionTokens int `json:"completion_tokens"`
 	TotalTokens      int `json:"total_tokens"`
+}
+
+type Message struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+	Name    string `json:"name"`
 }
 
 var (
@@ -103,6 +106,28 @@ func init() {
 	} else {
 		fmt.Println("Connected to kafka")
 	}
+}
+
+func extractMessages(body map[string]interface{}) []Message {
+	// Extract the messages part
+	messagesInterface, ok := body["messages"].([]interface{})
+	if !ok {
+		log.Fatal("Error: messages is not an array")
+	}
+
+	// Marshal the messages interface back into JSON
+	messagesJSON, err := json.Marshal(messagesInterface)
+	if err != nil {
+		log.Fatalf("Error occurred during re-marshaling. Error: %s", err.Error())
+	}
+
+	// Unmarshal the JSON into a slice of Message structs
+	var messages []Message
+	err = json.Unmarshal(messagesJSON, &messages)
+	if err != nil {
+		log.Fatalf("Error occurred during unmarshaling of messages. Error: %s", err.Error())
+	}
+	return messages
 }
 
 func getenv(key, fallback string) string {
@@ -200,9 +225,6 @@ func handleRequestAndRedirect(res http.ResponseWriter, req *http.Request) {
 	io.Copy(res, resp.Body)
 	fmt.Println("Returning response with status", resp.StatusCode)
 
-	// print body
-	fmt.Println(string(respBodyBytes))
-
 	var resBody OpenAIResponse
 	json.Unmarshal(respBodyBytes, &resBody)
 
@@ -223,11 +245,18 @@ func handleRequestAndRedirect(res http.ResponseWriter, req *http.Request) {
 
 	// log usage
 	if (req.URL.Path == "/chat/completions") && req.Method == "POST" {
+		// var messages []Message = extractMessages(body)
 		var inputTokens int
 		var outputTokens int
-		usage := resBody.Usage
-		inputTokens = usage.PromptTokens
-		outputTokens = usage.CompletionTokens
+
+		if body["stream"].(bool) {
+			// inputTokens = NumTokensFromMessages(messages, resBody.Model)
+			fmt.Println("Streaming not yet supported")
+		} else {
+			usage := resBody.Usage
+			inputTokens = usage.PromptTokens
+			outputTokens = usage.CompletionTokens
+		}
 
 		logUsage := LogUsage{
 			ID:           resBody.ID,
