@@ -46,6 +46,7 @@ type LogUsage struct {
 	InputTokens  int    `json:"input_tokens"`
 	OutputTokens int    `json:"output_tokens"`
 	CreatedTime  int64  `json:"created_time"`
+	Latency      int64  `json:"latency"`
 }
 
 type OpenAIResponse struct {
@@ -108,6 +109,10 @@ func init() {
 	}
 }
 
+func makeTimestamp() int64 {
+	return time.Now().UnixMilli()
+}
+
 func extractMessages(body map[string]interface{}) []Message {
 	// Extract the messages part
 	messagesInterface, ok := body["messages"].([]interface{})
@@ -140,6 +145,7 @@ func getenv(key, fallback string) string {
 
 func handleRequestAndRedirect(res http.ResponseWriter, req *http.Request) {
 	fmt.Println("Received request for", req.URL.Path)
+	startTimestamp := makeTimestamp()
 	// Parse the destination server's URL
 	url := "https://api.openai.com/v1/" // Replace with the URL of the destination server
 
@@ -258,6 +264,8 @@ func handleRequestAndRedirect(res http.ResponseWriter, req *http.Request) {
 			outputTokens = usage.CompletionTokens
 		}
 
+		endTimestamp := makeTimestamp()
+
 		logUsage := LogUsage{
 			ID:           resBody.ID,
 			AccountID:    userAPIKey,
@@ -266,6 +274,7 @@ func handleRequestAndRedirect(res http.ResponseWriter, req *http.Request) {
 			InputTokens:  inputTokens,
 			OutputTokens: outputTokens,
 			CreatedTime:  resBody.Created,
+			Latency:      endTimestamp - startTimestamp,
 		}
 
 		logUsageBytes, _ := json.Marshal(logUsage)
