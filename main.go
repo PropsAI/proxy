@@ -184,7 +184,6 @@ func handleRequestAndRedirect(res http.ResponseWriter, req *http.Request) {
 
 	var body map[string]interface{}
 	json.Unmarshal(reqBodyBytes, &body)
-	fmt.Println(string(reqBodyBytes))
 
 	userID, ok := body["user"].(string)
 	if !ok {
