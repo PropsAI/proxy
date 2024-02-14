@@ -155,8 +155,7 @@ func getenv(key, fallback string) string {
 func handleRequestAndRedirect(res http.ResponseWriter, req *http.Request) {
 	fmt.Println("Received request for", req.URL.Path)
 	startTimestamp := makeTimestamp()
-	// Parse the destination server's URL
-	url := "https://api.openai.com/v1/" // Replace with the URL of the destination server
+	url := "https://api.openai.com/v1/"
 
 	// Read the body
 	reqBodyBytes, readErr := io.ReadAll(req.Body)
