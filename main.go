@@ -253,15 +253,9 @@ func handleRequestAndRedirect(res http.ResponseWriter, req *http.Request) {
 		// var messages []Message = extractMessages(body)
 		var inputTokens int
 		var outputTokens int
-
-		if body["stream"].(bool) {
-			// inputTokens = NumTokensFromMessages(messages, resBody.Model)
-			fmt.Println("Streaming not yet supported")
-		} else {
-			usage := resBody.Usage
-			inputTokens = usage.PromptTokens
-			outputTokens = usage.CompletionTokens
-		}
+		usage := resBody.Usage
+		inputTokens = usage.PromptTokens
+		outputTokens = usage.CompletionTokens
 
 		endTimestamp := makeTimestamp()
 
