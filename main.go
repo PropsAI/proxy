@@ -74,10 +74,15 @@ type Message struct {
 	Name    string `json:"name"`
 }
 
+type Config struct {
+	logging bool
+}
+
 var (
-	Producer      *kafka.Producer
-	producerError error
-	Port          string
+	Producer       *kafka.Producer
+	producerError  error
+	Port           string
+	ConfigSettings Config
 )
 
 func init() {
@@ -106,6 +111,10 @@ func init() {
 		log.Fatal("Error connecting to kafka")
 	} else {
 		fmt.Println("Connected to kafka")
+	}
+
+	ConfigSettings = Config{
+		logging: true,
 	}
 }
 
@@ -190,18 +199,20 @@ func handleRequestAndRedirect(res http.ResponseWriter, req *http.Request) {
 		userID = ""
 	}
 
-	// log request
-	logRequest := LogRequest{
-		AccountID: userAPIKey,
-		UserID:    userID,
-		Path:      req.URL.Path,
-		Method:    req.Method,
-		Body:      string(reqBodyBytes),
-		SentAt:    time.Now().Unix(),
-	}
+	if ConfigSettings.logging {
+		// log request
+		logRequest := LogRequest{
+			AccountID: userAPIKey,
+			UserID:    userID,
+			Path:      req.URL.Path,
+			Method:    req.Method,
+			Body:      string(reqBodyBytes),
+			SentAt:    time.Now().Unix(),
+		}
 
-	logRequestBytes, _ := json.Marshal(logRequest)
-	SendLog(userAPIKey, logRequestBytes, "requests")
+		logRequestBytes, _ := json.Marshal(logRequest)
+		SendLog(userAPIKey, logRequestBytes, "requests")
+	}
 
 	// Send the request to the destination server
 	client := &http.Client{}
@@ -234,19 +245,21 @@ func handleRequestAndRedirect(res http.ResponseWriter, req *http.Request) {
 	json.Unmarshal(respBodyBytes, &resBody)
 
 	// log response
-	logResponse := LogResponse{
-		ID:         resBody.ID,
-		AccountID:  userAPIKey,
-		UserID:     userID,
-		Path:       req.URL.Path,
-		Method:     req.Method,
-		Body:       string(respBodyBytes),
-		StatusCode: resp.StatusCode,
-		SentAt:     time.Now().Unix(),
-	}
+	if ConfigSettings.logging {
+		logResponse := LogResponse{
+			ID:         resBody.ID,
+			AccountID:  userAPIKey,
+			UserID:     userID,
+			Path:       req.URL.Path,
+			Method:     req.Method,
+			Body:       string(respBodyBytes),
+			StatusCode: resp.StatusCode,
+			SentAt:     time.Now().Unix(),
+		}
 
-	logResponseBytes, _ := json.Marshal(logResponse)
-	SendLog(userAPIKey, logResponseBytes, "responses")
+		logResponseBytes, _ := json.Marshal(logResponse)
+		SendLog(userAPIKey, logResponseBytes, "responses")
+	}
 
 	// log usage
 	if (req.URL.Path == "/chat/completions") && req.Method == "POST" {
