@@ -1,4 +1,11 @@
-# Project Name: Props AI Proxy
+<img width="1270" alt="Screen Shot 2024-03-03 at 12 08 46 AM" src="https://github.com/k11kirky/dots/assets/25588954/c13514f8-2578-4b5c-9c46-a99621a3d017"><a>
+  <h1 align="center">Props AI Proxy</h1>
+</a>
+
+<p align="center">
+  Built and used by <a href="httops://getProps.ai">Props AI</a>
+</p>
+<br/
 
 ## Description
 
